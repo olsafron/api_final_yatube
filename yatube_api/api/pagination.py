@@ -12,8 +12,8 @@ class CustomLimitOffsetPagination(LimitOffsetPagination):
     """
 
     def paginate_queryset(self, queryset, request, view=None):
-        no_pagination = ('limit' not in request.query_params and
-                         'offset' not in request.query_params)
+        no_pagination = ('limit' not in request.query_params
+                         and 'offset' not in request.query_params)
         if no_pagination:
             return None
         return super().paginate_queryset(queryset, request, view)
