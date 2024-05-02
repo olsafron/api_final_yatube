@@ -18,7 +18,7 @@ class CustomLimitOffsetPagination(LimitOffsetPagination):
             return None
         return super().paginate_queryset(queryset, request, view)
 
-    def get_paginated_response(self, data):
+    def get_paginated_response(self, page_data):
         if self.limit is None and self.offset is None:
-            return Response(data)
-        return super().get_paginated_response(data)
+            return Response(page_data)
+        return super().get_paginated_response(page_data)

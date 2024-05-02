@@ -1,7 +1,6 @@
 # Вью.
 from django.shortcuts import get_object_or_404
 
-from rest_framework.exceptions import ValidationError
 from rest_framework.viewsets import (
     ModelViewSet,
     ReadOnlyModelViewSet,
@@ -15,7 +14,7 @@ from rest_framework.permissions import (
 )
 
 from .pagination import CustomLimitOffsetPagination
-from posts.models import Post, Group, Follow
+from posts.models import Post, Group
 from .serializers import (
     FollowSerializer,
     PostSerializer,
@@ -109,7 +108,6 @@ class FollowViewSet(GenericViewSet, CreateModelMixin, ListModelMixin):
         search_fields -- поля, по которым осуществляется поиск.
     """
 
-    queryset = Follow.objects.all()
     serializer_class = FollowSerializer
     permission_classes = (
         IsAuthenticated,
@@ -119,29 +117,8 @@ class FollowViewSet(GenericViewSet, CreateModelMixin, ListModelMixin):
 
     def get_queryset(self):
         """Пользователи могут видеть только свои подписки."""
-        return self.queryset.filter(user=self.request.user)
+        user = self.request.user
+        return user.followers.all()  # Simplified using related_name
 
     def perform_create(self, serializer):
-        """Создает новую подписку, проверяет ее корректность и сохраняет ее."""
-        user = self.request.user
-        following = serializer.validated_data['following']
-        if not user.is_authenticated:
-            raise ValidationError(
-                {'detail': 'Учетные данные не были предоставлены.'}
-            )
-        error_messages = {
-            'self_follow': 'Невозможно оформить подписку на самого себя.',
-            'already_followed': 'Вы уже подписаны на этого пользователя.',
-        }
-
-        if user == following:
-            error_key = 'self_follow'
-        elif Follow.objects.filter(user=user, following=following).exists():
-            error_key = 'already_followed'
-        else:
-            error_key = None
-
-        if error_key:
-            raise ValidationError({'detail': error_messages[error_key]})
-
-        serializer.save(user=user)
+        serializer.save(user=self.request.user)
